@@ -20,8 +20,9 @@ public class OrderReturnDetailFormAction implements CommandProcess {
 			HttpServletResponse response) throws ServletException, IOException {
 		
 		try {
-			HttpSession session = request.getSession();
-			String id = session.getAttribute("id").toString();
+			/*HttpSession session = request.getSession();
+			String id = session.getAttribute("id").toString();*/
+			String id="test2";
 			String order_sq=request.getParameter("order_sq");
 			OrderDao dao=OrderDao.getInstance();
 			
@@ -50,9 +51,7 @@ public class OrderReturnDetailFormAction implements CommandProcess {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		request.setAttribute("pageSet", "/mall/orderReturnDetailForm.jsp");
-		return "/mall/cheapmall.jsp";
+		return "/mall/orderReturnDetailForm.jsp";
 	}
 
 	

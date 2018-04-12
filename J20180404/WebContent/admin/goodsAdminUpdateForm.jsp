@@ -7,9 +7,9 @@
 <title>Cheap Mall</title>
 </head>
 <body>
-
-	<form action="goodsAdminUpdateFormPro.admin" method="post">
 	<h2>상품 상세정보 수정</h2>
+	
+	<form action="goodsAdminUpdateFormPro.admin" method="post">
 		상품Id: 	<input type="text" 	name="sq" 			value="${sq }"	readonly><br>
 		상품코드: <input type="text" 	name="cd" 			value="${dto.cd }" readonly><br>
 		상품명: 	<input type="text" 	name="nm" 			value="${dto.nm }"><br>
@@ -23,8 +23,11 @@
 		시작일: 	<input type="text" 	name="start_dt" 	value="${dto.start_dt }"><br>
 		종료일: 	<input type="text" 	name="end_dt" 	value="${dto.end_dt }"><br>
 		노출: 	<input type="text" 	name="display" 		value="${dto.display }"><br>
-		<input type="submit" value="수정">
-		<input type="reset" value="취소"	>
+		
+		<div style="float:right; padding: 10 10 10 10px!important!;">
+			<input type="submit" value="수정">
+			<input type="reset" value="취소"	>
+		</div>
 	</form>
 </body>
 </html>

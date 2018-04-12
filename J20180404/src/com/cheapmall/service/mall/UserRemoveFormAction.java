@@ -24,8 +24,8 @@ public class UserRemoveFormAction implements CommandProcess {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		request.setAttribute("pageSet", "/mall/userRemoveForm.jsp");
-		return "/mall/cheapmall.jsp";
+		
+		return "mall/userRemoveForm.jsp";
 		
 	}
 
