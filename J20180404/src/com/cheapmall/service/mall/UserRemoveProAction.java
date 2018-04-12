@@ -29,8 +29,7 @@ public class UserRemoveProAction implements CommandProcess{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		request.setAttribute("pageSet", "/mall/userRemovePro.jsp");
-		return "/mall/cheapmall.jsp";
+		return "mall/userRemovePro.jsp";
 	}
 
 	

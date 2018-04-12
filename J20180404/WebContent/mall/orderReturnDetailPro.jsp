@@ -16,13 +16,7 @@
 	</script>
 </c:if>
 
-<c:if test="${result==0 }">
-	<script type="text/javascript">
-		alert("다시 한번 확인해주세요");
-		location.href="goodsUserReturnForm.mall?id=${id}"
-	</script>
-</c:if>
-<c:if test="${result<0 }">
+<c:if test="${result<=0 }">
 	<script type="text/javascript">
 		alert("다시 한번 확인해주세요");
 		location.href="goodsUserReturnForm.mall?id=${id}"

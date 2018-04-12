@@ -16,7 +16,7 @@
 	<c:if test="${result>0 }">
 		<script type="text/javascript">
 		alert("선택한 회원이 삭제되었습니다.");
-		location.href="userAdminList.admin";
+		location.href="userAdminDeleteForm.admin";
 	</script>
 	</c:if>
 
