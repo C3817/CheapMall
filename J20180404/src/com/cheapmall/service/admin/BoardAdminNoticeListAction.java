@@ -12,13 +12,13 @@ import com.cheapmall.dto.BoardDto;
 import com.cheapmall.service.CommandProcess;
 
 public class BoardAdminNoticeListAction implements CommandProcess {
-	private static final String BOARD_CD = "B0";	// 공지사항 : B0
 
 	@Override
 	public String requestPro(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		
 		try {
 			BoardDao boardDao = BoardDao.getInstance();
-			int totCnt = boardDao.getBoardCount(BOARD_CD);
+			int totCnt = boardDao.getBoardCount("B0");
 			String pageNum = request.getParameter("pageNum");
 			
 			if (pageNum == null || pageNum.equals("")) {
@@ -30,7 +30,7 @@ public class BoardAdminNoticeListAction implements CommandProcess {
 			int startRow = (currentPage - 1) * pageSize + 1;
 			int endRow = startRow + pageSize - 1;
 			int startNum = totCnt - startRow + 1;
-			List<BoardDto> list = boardDao.listNotice(startRow, endRow, BOARD_CD);
+			List<BoardDto> list = boardDao.listNotice(startRow, endRow);
 			int pageCnt = (int)Math.ceil((double)totCnt/pageSize);
 			int startPage = (int)(currentPage - 1) / blockSize * blockSize + 1;
 			int endPage = startPage + blockSize - 1;
@@ -50,7 +50,7 @@ public class BoardAdminNoticeListAction implements CommandProcess {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	
+		
 		return "boardAdminNoticeList.jsp";
 	}
 }

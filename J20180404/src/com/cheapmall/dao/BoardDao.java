@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.naming.Context;
@@ -36,6 +37,10 @@ public class BoardDao{
 		5. writeAdminNotice(BoardDto)
 		6. updateAdminNotice(BoardDto)
 		7. deleteAdminNotice(String)
+		8. listAdminOther(int, int, String)
+		2018-04-12
+		9. updateBp(String)
+		10. getContent(String)
 		
 	*/
 	
@@ -106,20 +111,19 @@ public class BoardDao{
 	/*작성자	: 최우일
 	수정일	: 2018-04-10
 	내용		: 공지사항 리스트 */
-	public List<BoardDto> listNotice(int startRow, int endRow, String boardCd) throws SQLException {
+	public List<BoardDto> listNotice(int startRow, int endRow) throws SQLException {
 		List<BoardDto> list = new ArrayList<BoardDto>();
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		String sql = "select board_sq, subject, user_id, write_dt from(select a.*, rownum rn from "
-				+ " (select * from board where board_cd=? order by board_sq desc) a) where rn between ? and ?";
+				+ " (select * from board where board_cd='B0' order by board_sq desc) a) where rn between ? and ?";
 		
 		try {
 			conn = getConnection();
 			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, boardCd);
-			pstmt.setInt(2, startRow);
-			pstmt.setInt(3, endRow);
+			pstmt.setInt(1, startRow);
+			pstmt.setInt(2, endRow);
 			rs = pstmt.executeQuery();
 			
 			while (rs.next()) {
@@ -174,17 +178,16 @@ public class BoardDao{
 		
 		return boardDto;
 	}
-	
 	/*작성자	: 최우일
 	수정일	: 2018-04-10
-	내용		: 일반 사용자가 문의/건의/신고 작성 */
+	내용		: 문의/건의/신고 작성 */
 	public int write(BoardDto boardDto)	throws SQLException {
 		int result = 0;
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		String sql = "insert into board values('B' || lpad(board_sq.nextval, 9, '0'),?,sysdate,"
-				+ "?,?,?,?, 'BP0',?)";
+				+ "?,?,?,?,?,?)";
 		String object = null;
 		
 		if (!boardDto.getObject().equals("")) {
@@ -199,7 +202,8 @@ public class BoardDao{
 			pstmt.setString(3, boardDto.getContent());
 			pstmt.setString(4, object);
 			pstmt.setString(5, boardDto.getBoard_cd());
-			pstmt.setString(6, boardDto.getIp());
+			pstmt.setString(6, boardDto.getBoard_p_cd());
+			pstmt.setString(7, boardDto.getIp());
 			result = pstmt.executeUpdate();
 			
 		} catch (Exception e) {
@@ -266,6 +270,54 @@ public class BoardDao{
 	}
 	
 	/*작성자	: 최우일
+	수정일	: 2018-04-12
+	내용		: 문의/건의/신고 에 필요한 리스트내용 맵에 담음 */
+	public List<HashMap> listAdminOther(int startRow, int endRow, String board_cd, String bp) throws SQLException {
+		List<HashMap> list = new ArrayList<HashMap>();
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql1 = "select board_sq, subject, user_id, write_dt, meaning from(select a.*, rownum rn from "
+				+ " (select * from board where board_cd=? order by board_sq desc) a), code where (rn between ? and ?) "
+				+ " and board_p_cd = cd and used='Y' ";
+		String sql2 = "select board_sq, subject, user_id, write_dt, meaning from(select a.*, rownum rn from "
+				+ " (select * from board where board_cd=? order by board_sq desc) a), code where (rn between ? and ?) "
+				+ " and board_p_cd=? and board_p_cd = cd and used='Y' ";
+		
+		try {
+			conn = getConnection();
+			
+			if (bp.equals("all")) {
+				pstmt = conn.prepareStatement(sql1);
+				pstmt.setString(1, board_cd);
+				pstmt.setInt(2, startRow);
+				pstmt.setInt(3, endRow);
+			} else {
+				pstmt = conn.prepareStatement(sql2);
+				pstmt.setString(1, board_cd);
+				pstmt.setInt(2, startRow);
+				pstmt.setInt(3, endRow);
+				pstmt.setString(4, bp);
+			}
+			rs = pstmt.executeQuery();
+			
+			while (rs.next()) {
+				HashMap map = new HashMap();
+				map.put("board_sq", rs.getString(1));
+				map.put("subject", rs.getString(2));
+				map.put("user_id", rs.getString(3));
+				map.put("write_dt", rs.getDate(4));
+				map.put("meaning", rs.getString(5));
+				list.add(map);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, pstmt, rs);
+		}
+		return list;
+	}
+	/*작성자	: 최우일
 	수정일	: 2018-04-10
 	내용		: 관리자 공지사항 삭제 */
 	public int deleteAdminNotice(String board_sq) throws SQLException {
@@ -288,7 +340,63 @@ public class BoardDao{
 		
 		return result;
 	}
-	
+	/*작성자	: 최우일
+	수정일	: 2018-04-12
+	내용		: 글 진행상태 변경 */
+	public int updateBp(String board_sq, String bp) throws SQLException {
+		int result = 0;
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = null;
+		
+		if (bp.equals("BP1")) {
+			sql = "update board set board_p_cd=? where board_sq=? and board_p_cd='BP0'";
+		} else if (bp.equals("BP2")) {
+			sql = "update board set board_p_cd=? where board_sq=? and board_p_cd='BP1'";
+		} else if (bp.equals("BP3")) {
+			sql = "update board set board_p_cd=? where board_sq=? and board_p_cd='BP1'";
+		}
+		
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, bp);
+			pstmt.setString(2, board_sq);
+			result = pstmt.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, pstmt, rs);
+		}
+		return result;
+	}
+	/*작성자	: 최우일
+	수정일	: 2018-04-12
+	내용		: 답글이 달린 글인 경우 답글 출력 */
+	public String getContent(String board_sq) throws SQLException {
+		String content = null;
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = "select content from board where board_cd='B4' and object=?";
+		
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, board_sq);
+			rs = pstmt.executeQuery();
+			
+			if (rs.next()) {
+				content = rs.getString(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, pstmt, rs);
+		}
+		return content;
+	}
 	// HJM Part Start!
 	public int getTotalReview(String goods_cd, String reviewType) throws SQLException{
 		Connection conn = null;
