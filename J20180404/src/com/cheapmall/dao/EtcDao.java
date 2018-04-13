@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -26,6 +27,14 @@ public class EtcDao {
 	 * 	1. searchTagGet() -> 검색어를 가져옴(ajax)
 	 *	2. searchKeyword() / getKeyword() -> 검색어를 검색
 	 *	3. registKeyword() -> 검색어 등록
+	 */
+	
+/*	
+	 * 작성자 : 최우일
+	 * 최초작성일 : 2018-04-12
+	 * 내용 :
+	 * 	1. checkReport(String)
+	 *  2. insertReport(String, int)
 	 */
 	
 	private static EtcDao instance;
@@ -172,5 +181,59 @@ public class EtcDao {
 		}
 		
 		return jsonObject;
+	}
+	
+	// CWI Part Start
+	
+	/*작성자	: 최우일
+	수정일	: 2018-04-12
+	내용		: 해당 일자 기준 이미 제재를 당한 사용자인지 검사 후 제재 종료일 반환 */
+	public Date checkReport(String user_id) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		Date check = null;
+		String sql = "select dt + days from report where user_id=? and sysdate between dt and dt + days";
+		
+		try {
+			conn = getConnection();
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, user_id);
+			rs = ps.executeQuery();
+			if(rs.next()) {
+				check = rs.getDate(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, ps, rs);
+		}
+		
+		return check;
+	}
+	
+	/*작성자	: 최우일
+	수정일	: 2018-04-12
+	내용		: checkReport에서 반환되지 않았다면 새롭게 생성 */
+	public int insertReport(String user_id, int days) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		int result = 0;
+		String sql = "insert into report values(?,sysdate,?)";
+		
+		try {
+			conn = getConnection();
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, user_id);
+			ps.setInt(2, days);
+			result = ps.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, ps, rs);
+		}
+		
+		return result;
 	}
 }

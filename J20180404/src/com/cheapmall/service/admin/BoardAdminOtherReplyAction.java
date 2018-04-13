@@ -1,40 +1,43 @@
-package com.cheapmall.service.mall;
+package com.cheapmall.service.admin;
 
 import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import com.cheapmall.dao.BoardDao;
 import com.cheapmall.dto.BoardDto;
 import com.cheapmall.service.CommandProcess;
 
-public class BoardWriteProAction implements CommandProcess {
+public class BoardAdminOtherReplyAction implements CommandProcess {
 
 	@Override
 	public String requestPro(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// b4 bp2 관리자 [답변]제목
+		
 		try {
-			HttpSession session = request.getSession();
+			String pageNum = request.getParameter("pageNum");
+			String board_cd = request.getParameter("board_cd");
 			BoardDto boardDto = new BoardDto();
-			BoardDao boardDao = BoardDao.getInstance();
-			
-			boardDto.setUser_id(session.getAttribute("id").toString());
+			boardDto.setUser_id("관리자");
 			boardDto.setSubject(request.getParameter("subject"));
 			boardDto.setContent(request.getParameter("content"));
-			boardDto.setObject(request.getParameter("object"));
-			boardDto.setBoard_cd(request.getParameter("board_cd"));
-			boardDto.setBoard_p_cd("BP0");
+			boardDto.setObject(request.getParameter("board_sq"));
+			boardDto.setBoard_cd("B4");
+			boardDto.setBoard_p_cd("BP2");
 			boardDto.setIp(request.getRemoteAddr());
 			
+			BoardDao boardDao = BoardDao.getInstance();
 			int result = boardDao.write(boardDto);
+			boardDao.updateBp(request.getParameter("board_sq"), "BP2");
 			
 			request.setAttribute("result", result);
-			request.setAttribute("pageSet", "boardWritePro.jsp");
+			request.setAttribute("pageNum", pageNum);
+			request.setAttribute("board_cd", board_cd);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return "cheapmall.jsp";
+		return "boardAdminOtherReply.jsp";
 	}
 }
