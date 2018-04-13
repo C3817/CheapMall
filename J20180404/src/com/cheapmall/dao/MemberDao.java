@@ -32,6 +32,9 @@ public class MemberDao {
 		2. selectId(String, String)
 		3. checkPwToFind(String, String)
 		4. updatePw(String, String, String)
+		2018-04-13
+		5. checkGrade(String)
+		6. authGrade(String)
 		
 	*/
 	
@@ -219,7 +222,56 @@ public class MemberDao {
 		
 		return result;
 	}
-	
+	/*작성자	: 최우일
+	수정일	: 2018-04-13
+	내용		: grade가 없다면 미인증회원으로 간주하고 이메일 출력 */
+	public String checkGrade(String id) throws SQLException {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = "select email from users where id=? and grade is null";
+		String email = null;
+		
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, id);
+			rs = pstmt.executeQuery();
+			
+			if (rs.next()) {
+				email = rs.getString(1);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, pstmt, rs);
+		}
+		
+		return email;
+	}
+	/*작성자	: 최우일
+	수정일	: 2018-04-13
+	내용		: 이메일인증을 받았다면 grade 업데이트 */
+	public int authGrade(String id) throws SQLException {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql = "update users set grade='G0' where id=? and grade is null";
+		int result = 0;
+		
+		try {
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, id);
+			result = pstmt.executeUpdate();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, pstmt, rs);
+		}
+		
+		return result;
+	}
 	// HJM Start!!!
 	public UsersDto userGetInfo(String id) throws SQLException{
 		Connection conn = null;
