@@ -22,7 +22,7 @@ public class GoodsUserReturnFormAction implements CommandProcess{
 		
 		try {
 			HttpSession session = request.getSession();
-			String id = session.getAttribute("id") == null ? null : session.getAttribute("id").toString();
+			String id = session.getAttribute("id").toString();
 			/*String id="test2";*/
 			OrderDao dao=OrderDao.getInstance();
 			

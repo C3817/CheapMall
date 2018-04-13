@@ -4,19 +4,23 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style>
+	#main{
+		display:flex;
+	}
+</style>
 <title>Cheap Mall</title>
 
 </head>
 <body>
 
 
-<!-- 이 페이지는 회원이 탈퇴하기 위해 비밀번호를 확인시키는 페이지입니다. -->
-
-
-<form action="userRemovePro.mall" method="post">
-	<h3>비밀번호 확인</h3>
-		<input type="text" name="pw"><p>
-		<input type="submit" value="확인" style="float:right; padding: 10 10 10 10px!important!">
-</form>
+<div id="main">
+	<form action="userRemovePro.mall" method="post">
+		<h3>비밀번호 확인</h3>
+			<input type="text" name="pw"><p>
+			<input type="submit" value="확인" style="float:right; padding: 10 10 10 10px!important!">
+	</form>
+</div>
 </body>
 </html>
