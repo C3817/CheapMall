@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -11,6 +13,8 @@ import javax.sql.DataSource;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import com.cheapmall.dto.PopupDto;
 
 public class EtcDao {
 	/*
@@ -172,5 +176,101 @@ public class EtcDao {
 		}
 		
 		return jsonObject;
+	}
+	
+	/*
+	 * 작성자 : 정수연
+	 * 최초작성일 : 20180413
+	 * 내용 :
+	 * 	1. getPopupInfo() : 팝업에 관한 정보를 가져옵니다.
+	 *  2. getPopupInfo(sq): 팝업 수정을 위한 DTO 정보를 가져옵니다.
+	 *  3. modifyPopup(PopupDto dto): 팝업을 수정합니다
+	 */
+	// JSY part Start!
+	// 팝업에 관한 정보를 가져옵니다.
+	public List<PopupDto> getPopupInfo() throws SQLException {
+		
+		List<PopupDto> list=new ArrayList<PopupDto>();
+		
+		Connection conn=null;
+		PreparedStatement ps=null;
+		ResultSet rs=null;
+		
+		String sql="select * from popup";
+		try {
+			conn=getConnection();
+			ps=conn.prepareStatement(sql);
+			rs=ps.executeQuery();
+			
+			while(rs.next()){
+				PopupDto dto=new PopupDto();
+				dto.setSq(rs.getString("sq"));
+				dto.setUrl(rs.getString("url"));
+				dto.setNm(rs.getString("nm"));
+				dto.setStart_dt(rs.getDate("start_dt"));
+				dto.setEnd_dt(rs.getDate("end_dt"));
+				list.add(dto);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		DisConnection(conn, ps, rs);
+		return list;
+	}
+
+	// 팝업 수정을 위한 DTO 정보를 가져옵니다.
+	public PopupDto getPopupInfo(String sq) throws SQLException {
+		
+		PopupDto dto=new PopupDto();
+		Connection conn=null;
+		PreparedStatement ps=null;
+		ResultSet rs=null;
+		
+		String sql="select * from popup where sq=?";
+		try {
+			conn=getConnection();
+			ps=conn.prepareStatement(sql);
+			ps.setString(1, sq);
+			rs=ps.executeQuery();
+			
+			if(rs.next()){
+				dto.setSq(rs.getString("sq"));
+				dto.setUrl(rs.getString("url"));
+				dto.setNm(rs.getString("nm"));
+				dto.setStart_dt(rs.getDate("start_dt"));
+				dto.setEnd_dt(rs.getDate("end_dt"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		DisConnection(conn, ps, rs);
+		
+		return dto;
+	}
+	
+	// 팝업을 수정합니다
+	public int modifyPopup(PopupDto dto) throws SQLException {
+		
+		int result=0;
+		Connection conn=null;
+		PreparedStatement ps=null;
+		ResultSet rs=null;
+		
+		String sql="update popup set nm=?, start_dt=?, end_dt=add_months(?,1),url=? where sq=?";
+		try {
+			conn=getConnection();
+			ps=conn.prepareStatement(sql);
+			ps.setString(1, dto.getNm());
+			ps.setDate(2, new java.sql.Date(dto.getStart_dt().getTime()));
+			ps.setDate(3, new java.sql.Date(dto.getStart_dt().getTime()));
+			ps.setString(4,dto.getUrl());
+			ps.setString(5, dto.getSq());
+			result=ps.executeUpdate();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		DisConnection(conn, ps, rs);
+		return result;
 	}
 }

@@ -20,16 +20,18 @@ public class UserRemoveProAction implements CommandProcess{
 		try {
 			HttpSession session = request.getSession();
 			String id = session.getAttribute("id").toString();
+			
 			String pw=request.getParameter("pw");
 			MemberDao dao=MemberDao.getInstance();
 			
 			int result=dao.removeUser(id,pw);
 			
 			request.setAttribute("result",result);
+			request.setAttribute("pageSet", "mall/userRemovePro.jsp");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return "mall/userRemovePro.jsp";
+		return "/mall/cheapmall.jsp";
 	}
 
 	

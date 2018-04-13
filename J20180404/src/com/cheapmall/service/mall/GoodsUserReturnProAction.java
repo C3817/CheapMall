@@ -18,13 +18,14 @@ public class GoodsUserReturnProAction implements CommandProcess {
 		try {
 			HttpSession session = request.getSession();
 			String id = session.getAttribute("id").toString();
+			/*String id="test2";*/
 			String[] order_sq = request.getParameterValues("returnOrder_sq");
 			OrderDao dao = OrderDao.getInstance();
 			int result = 0;
 			int resultAll = 0;
 
 			for (int i = 0; i < order_sq.length; i++) {
-				result = dao.returnOrder(id, order_sq[i]);
+				result = dao.returnOrderAll(id, order_sq[i]);
 				resultAll += result;
 			}
 			

@@ -7,6 +7,7 @@ import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.cheapmall.dao.MemberDao;
 import com.cheapmall.dto.UsersDto;
@@ -19,10 +20,12 @@ public class UserAdminListAction implements CommandProcess {
 			HttpServletResponse response) throws ServletException, IOException {
 
 		try {
+			HttpSession session=request.getSession();
+			String id=session.getAttribute("id").toString();
 			
 			MemberDao dao=MemberDao.getInstance();
 			String search=request.getParameter("search");
-			
+			System.out.println("search: "+search);
 			
 			int count=0;
 			if(search==null|| search.length()==0){
@@ -39,10 +42,10 @@ public class UserAdminListAction implements CommandProcess {
 			
 			int currentPage=Integer.parseInt(pageNum);
 			int pageSize=3, blockSize=3;
-			
-			int startRow= (currentPage-1)* pageSize+1;
+			int startRow= ((currentPage-1)* pageSize)+1;
 			int endRow= startRow+pageSize-1;
 			int startNum=count-startRow+1;
+			
 			List<UsersDto> dto=dao.selectUser(search,startRow,endRow);
 			
 			int totalPage= (int) Math.ceil((double) count/pageSize); 
@@ -60,13 +63,22 @@ public class UserAdminListAction implements CommandProcess {
 			request.setAttribute("endPage", endPage);
 			request.setAttribute("pageNum", pageNum);
 			request.setAttribute("search", search);
-		
+			request.setAttribute("pageSet", "/admin/userAdminList.jsp");
+			
+			System.out.println("count: "+count);
+			System.out.println("currentPage: "+currentPage);
+			System.out.println("blockSize: "+blockSize);
+			System.out.println("startNum: "+startNum);
+			System.out.println("totalPage: "+totalPage);
+			System.out.println("startPage: "+startPage);
+			System.out.println("endPage: "+endPage);
+			System.out.println("pageNum: "+pageNum);
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		return "/admin/userAdminList.jsp";
+		return "/mall/cheapmall.jsp";
 	}
 
 }

@@ -68,7 +68,7 @@ function getDetail(r){
 								<input type="checkbox" name="returnOrder_sq" value=${order.order_sq }>
 							</c:if>
 							<c:if test="${fn:contains(checkCd,'R') }">
-									${order.order_sq }
+									
 							</c:if>
 						</td>
 					</tr>

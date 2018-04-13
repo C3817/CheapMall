@@ -22,7 +22,8 @@ public class GoodsUserReturnFormAction implements CommandProcess{
 		
 		try {
 			HttpSession session = request.getSession();
-			String id = session.getAttribute("id").toString();
+			String id = session.getAttribute("id") == null ? null : session.getAttribute("id").toString();
+			/*String id="test2";*/
 			OrderDao dao=OrderDao.getInstance();
 			
 			
@@ -56,9 +57,7 @@ public class GoodsUserReturnFormAction implements CommandProcess{
 			request.setAttribute("startPage",startPage);
 			request.setAttribute("endPage", endPage);
 			request.setAttribute("pageNum", pageNum);
-			
 			request.setAttribute("pageSet", "/mall/goodsUserReturnForm.jsp");
-			
 			
 		} catch (SQLException e) {
 			e.printStackTrace();

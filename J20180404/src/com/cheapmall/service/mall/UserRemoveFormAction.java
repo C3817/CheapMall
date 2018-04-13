@@ -20,12 +20,15 @@ public class UserRemoveFormAction implements CommandProcess {
 		try {
 			HttpSession session = request.getSession();
 			String id = session.getAttribute("id").toString();
+			/*String id="test2";*/
+			
 			request.setAttribute(id, "id");
+			request.setAttribute("pageSet", "userRemoveForm.jsp");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		return "mall/userRemoveForm.jsp";
+		return "/mall/cheapmall.jsp";
 		
 	}
 

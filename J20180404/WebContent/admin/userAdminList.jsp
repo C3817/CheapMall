@@ -8,7 +8,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Cheap Mall</title>
 
-<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="../js/jquery.js"></script>
 <script type="text/javascript">
 	
 		$(function(){
@@ -22,18 +22,22 @@
 </head>
 <body>
 
-	<!-- 이 페이지는 관리자가 회원 삭제를 하기 위한 페이지 입니다.  -->
+	<div id="wrap">
+		<jsp:include page="adminMenuList.jsp" />
+	</div>
 
+	<div id="main">
+	
 	<h2>회원삭제</h2>
 
-		<form action="userAdminDeleteForm.admin?pageNum=${pageNum }" method="post">
+		<form action="userAdminList.admin" method="post">
 			<div style="float:right; padding: 10 10 10 10px! important;" >
 				<input type="text" name="search" value="${search }"> 
 				<input type="submit" value="검색"><p>
 			</div>
 		</form>
 	
-	<form action="userAdminDeletePro.admin?pageNum=${pageNum }" method="post">
+	<form action="userAdminDeletePro.admin?pageNum=${pageNum }&search=${search}" method="post">
 		<table border="1" id="deleteMember">
 			<tr>
 				<th>회원ID</th>
@@ -74,17 +78,17 @@
 			
 			<div style="text-align: center">
 
-				<c:if test="${ currentPage>1 }">
-					<a href='userAdminDeleteForm.admin?pageNum=${currentPage-1 }'>
+				<c:if test="${ startPage > blockSize }">
+					<a href='userAdminList.admin?pageNum=${startPage-blockSize }&search=${search}'>
 						[이전] </a>
 				</c:if>
 	
 				<c:forEach var="i" begin="${startPage }" end="${endPage }">
-					<a href='userAdminDeleteForm.admin?pageNum=${i}&search=${search}'> [${i }] </a>
+					<a href='userAdminList.admin?pageNum=${i}&search=${search}'> [${i }] </a>
 				</c:forEach>
 	
-				<c:if test="${endPage<pageCnt }">
-					<a href='userAdminDeleteForm.admin?pageNum=${startPage+blockSize }'>
+				<c:if test="${endPage<totalPage }">
+					<a href='userAdminList.admin?pageNum=${startPage+blockSize }&search=${search}'>
 						[다음] </a>
 				</c:if>
 
@@ -92,11 +96,11 @@
 		
 		
 
-		<div style="float: right; padding: 10 10 10 10px!important;"> 
-			<input type="submit" value="삭제"> 
-			<input type="reset" value="취소">
-		</div>
-	</form>
-
+			<div style="float: right; padding: 10 10 10 10px!important;"> 
+				<input type="submit" value="삭제"> 
+				<input type="reset" value="취소">
+			</div>
+		</form>
+	</div>
 </body>
 </html>

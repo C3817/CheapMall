@@ -8,6 +8,7 @@ import java.util.Date;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.cheapmall.dao.GoodsDao;
 import com.cheapmall.dto.GoodsDto;
@@ -20,6 +21,9 @@ public class GoodsAdminUpdateFormProAction implements CommandProcess{
 			HttpServletResponse response) throws ServletException, IOException {
 		
 		try {
+			HttpSession session=request.getSession();
+			String id=session.getAttribute("id").toString();
+			
 			String sq=request.getParameter("sq");
 			String cd=request.getParameter("cd");
 			String nm=request.getParameter("nm");
@@ -29,7 +33,7 @@ public class GoodsAdminUpdateFormProAction implements CommandProcess{
 			String middle_category=request.getParameter("middle_category");
 			String color=request.getParameter("color");
 			int stock=Integer.parseInt(request.getParameter("stock"));
-		
+			String display=request.getParameter("display");
 			GoodsDto dto=new GoodsDto();
 			GoodsDao dao=GoodsDao.getInstance();
 			
@@ -42,7 +46,7 @@ public class GoodsAdminUpdateFormProAction implements CommandProcess{
 			dto.setMiddle_category(middle_category);
 			dto.setColor(color);
 			dto.setStock(stock);
-
+			dto.setDisplay(display);
 			Date start_dt=new SimpleDateFormat("yyyy-MM-dd").parse(request.getParameter("start_dt"));
 			Date end_dt=new SimpleDateFormat("yyyy-MM-dd").parse(request.getParameter("end_dt"));
 			dto.setStart_dt(start_dt);
@@ -55,13 +59,13 @@ public class GoodsAdminUpdateFormProAction implements CommandProcess{
 			}else result=0;
 			
 			request.setAttribute("result", result);
+			request.setAttribute("pageSet", "/admin/goodsAdminUpdateFormPro.jsp");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 		
-		
-		return "/admin/goodsAdminUpdateFormPro.jsp";
+		return "/mall/cheapmall.jsp";
 	}
 
 }

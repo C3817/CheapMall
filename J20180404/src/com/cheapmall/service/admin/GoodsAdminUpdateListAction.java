@@ -1,13 +1,13 @@
 package com.cheapmall.service.admin;
 
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.cheapmall.dao.GoodsDao;
 import com.cheapmall.dto.GoodsDto;
@@ -20,6 +20,9 @@ public class GoodsAdminUpdateListAction implements CommandProcess{
 	public String requestPro(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 	
+		HttpSession session=request.getSession();
+		String id=session.getAttribute("id").toString();
+		/*String id="test3";*/
 		String category=request.getParameter("category");
 		String search=request.getParameter("search");
 		try {
@@ -77,11 +80,20 @@ public class GoodsAdminUpdateListAction implements CommandProcess{
 			request.setAttribute("list",list);
 			request.setAttribute("search", search);
 			request.setAttribute("category", category);
+			request.setAttribute("pageSet", "/admin/goodsAdminUpdateList.jsp");
 			
+			System.out.println("count: "+count);
+			System.out.println("currentPage: "+currentPage);
+			System.out.println("blockSize: "+blockSize);
+			System.out.println("startNum: "+startNum);
+			System.out.println("totalPage: "+totalPage);
+			System.out.println("startPage: "+startPage);
+			System.out.println("endPage: "+endPage);
+			System.out.println("pageNum: "+pageNum);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return "/admin/goodsAdminUpdateList.jsp";
+		return "/mall/cheapmall.jsp";
 	}
 
 
