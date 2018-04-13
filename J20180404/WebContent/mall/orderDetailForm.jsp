@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -43,51 +43,122 @@
                 }
 
                 // 우편번호와 주소 정보를 해당 필드에 넣는다.
-                document.getElementById('zipcode').value = data.zonecode; //5자리 새우편번호 사용
-                document.getElementById('addr').value = fullAddr;
+                document.getElementById('newZipcode').value = data.zonecode; //5자리 새우편번호 사용
+                document.getElementById('newAddr').value = fullAddr;
 
                 // 커서를 상세주소 필드로 이동한다.
-                document.getElementById('addr_detail').focus();
+                document.getElementById('newAddr_detail').focus();
             }
         }).open();
     }
     
+    // 결재방식 div 전환
     function switchShow(payMethod){
-    	alert(payMethod);
-    	var method = document.getElementById(payMethod);
+    	var method = $('#'+payMethod).attr('id');
     	
-    	if(payMethod == 'kakaopay'){
-    		var list = method.classList;
-    		
-    		alert(list[0]);
-    	} else if(payMethod == 'creditcard'){
-    		
+    	if(method == 'payment1'){
+    		$('#kakaopay').css("display", "block");
+    		$('#creditcard').css("display", "none");
+    		$('#bankbook').css("display", "none");
+    	} else if(method == 'payment2'){
+    		$('#kakaopay').css("display", "none");
+    		$('#creditcard').css("display", "block");
+    		$('#bankbook').css("display", "none");
+    	} else if(method == 'payment3'){
+    		$('#kakaopay').css("display", "none");
+    		$('#creditcard').css("display", "none");
+    		$('#bankbook').css("display", "block");
     	}
     	
     }
     
+    // point 사용
     function usePoint(){
-    	var point = parseInt(document.getElementById('point').value);
-    	if(isNaN(point) == true){
-    		alert("숫자입니다.");
-    	} else {
-    		alert("아닙니다.");
+    	var point = $('#inputPoint').val();
+    	var realpoint = parseInt(${orderBag.point });
+    	if(point == 0 || point.length == 0){
+    		alert("0개는 사용할 수 없습니다.");
+    		$('#point').val(0);
+    		$('#usePoint').html("0원");
+    		$('#totalPrice').html("${orderBag.total + orderBag.delivery_fee}");
+    		return;
     	}
-    	alert(point);
+    	if(point > realpoint){
+    		alert("보유하신 포인트보다 초과하여 입력하였습니다.\n" +
+    				"보유포인트 = " + realpoint);
+    		return;
+    	}
+    	if(point < 100){
+    		alert("100미만의 포인트는 사용할 수 없습니다.");
+    		$('#point').val(0);
+    		$('#usePoint').html("0원");
+    		$('#totalPrice').html("${orderBag.total + orderBag.delivery_fee}");
+    		return;
+    	}
+    	
+    	// 앞의 0을 방지하기위한 자동 변환
+    	var str = point +"";
+    	var i;
+    	for(i=0 ; i<str.length ;i++){
+    		if(point.charAt(i) != '0'){
+    			break;
+    		}
+    	}
+    	str = str.substring(i, str.length);
+    	point = parseInt(str);
+    	
+    	$('#point').val(point);
+    	$('#inputPoint').val(point);
+    	$('#usePoint').html(point+"원");
+    	$('#totalPrice').html(${orderBag.total + orderBag.delivery_fee} - point +"원");
     }
     
-    function switchAddr(){
-    	var select = document.getElementById('defaultAddr');
+    function switchAddr(get){
+		var method = $('#'+get).attr('id');
     	
-    	//////////////////////
+    	if(method == 'defaultAddr'){
+    		$('#normalAddr').css("display", "block");
+    		$('#inputAddr').css("display", "none");
+    	} else if(method == 'newAddress'){
+    		$('#normalAddr').css("display", "none");
+    		$('#inputAddr').css("display", "block");
+    	}
+    }
+    
+    function chk(){
+    	if(frm.address[0].checked == true){
+    		if(${orderBag.zipcode == null || fn:length(orderBag.zipcode) == 0} 
+    			|| ${orderBag.addr_detail == null || fn:length(orderBag.addr_detail) == 0}){
+    			alert("기본 배송지 주소가 없습니다.\n"+
+    					"새로운 배송지 주소를 입력해주세요.");
+    			$('#newAddress').attr('checked', 'true');
+    			$('#normalAddr').css("display", "none");
+        		$('#inputAddr').css("display", "block");
+    			return false;
+    		}
+    	}
+    	
+    	if(frm.address[1].checked == true){
+    		if(frm.newZipcode.value == null || frm.newZipcode.value.length == 0 
+    				|| frm.newAddr_detail.value == null || frm.newAddr_detail.length == 0){
+    			alert("새로운 주소를 입력해주세요.");
+    			return false;
+    		}
+    	}
+    	
+    	if(frm.payment.value == 'kakaopay'){
+    		if(frm.kakaopay.value == null || frm.kakaopay.value.length == 0){
+    			alert("kakaoID를 입력해주세요.");
+    			frm.kakaopay.focus();
+    			return false;
+    		}
+    	}
     }
 </script>
 <style type="text/css">
-	.show{
-		display: block;
-	}
-	.none{
-		display: none;
+	input[type=number]::-webkit-inner-spin-button {
+	    -webkit-appearance: none;
+	    margin: 0;
 	}
 </style>
 </head>
@@ -98,20 +169,34 @@
 	<c:set var="lastRow" value="${totalRow.count }"></c:set>
 </c:forEach>
 
-<form action="" method="post">
+<form action="OrderDetailPro.mall" method="post" name="frm" onsubmit="return chk()">
+
 	<!-- hidden -->
-	<input type="hidden" value="${delivery_fee }" name="delivery_fee">
-	<input type="hidden" value="" name="total">
-	<input type="hidden" value="${zipcode }" name="zipcode">
-	<input type="hidden" value="${addr }" name="addr">
-	<input type="hidden" value="${addr_detail }" name="addr_detail">
+	<input type="hidden" value="${orderBag.delivery_fee }" name="delivery_fee">
+	<input type="hidden" value="${orderBag.total }" name="total">
+	<input type="hidden" value="${orderBag.zipcode }" name="zipcode">
+	<input type="hidden" value="${orderBag.addr }" name="addr">
+	<input type="hidden" value="${orderBag.addr_detail }" name="addr_detail">
+	<input type="hidden" value="${orderBag.point }" name="point" id="point">
+	<!-- array로 보내주기 위한 작업 -->
+	<c:forEach var="goods" items="${orderBag.orders }">
+		<input type="hidden" name="goods_sq" value="${goods.goods_sq }">
+		<input type="hidden" name="origin_price" value="${goods.origin_price }">
+		<input type="hidden" name="dc_price" value="${goods.dc_price }">
+		<input type="hidden" name="cnt" value="${goods.cnt }">
+	</c:forEach>
+	<c:forEach var="carts" items="${cart_sq }">
+		<input type="hidden" name="cart_sq" value="${carts }">
+	</c:forEach>
+	
 	<table border="1">
 		<tr>
 			<th colspan="2">상품정보</th>
 			<th>브랜드</th>
 			<th>배송비</th>
 			<th>수량</th>
-			<th>할인</th>
+			<th>단가</th>
+			<th>할인금액</th>
 			<th>주문금액</th>
 		</tr>
 		<c:forEach var="goods" items="${orderBag.orders }" varStatus="test">
@@ -125,43 +210,45 @@
 				<!-- test -->
 				<c:if test="${test.first }">
 					<td rowspan="${lastRow }">
-						<c:if test="${goods.delivery_fee == 0 }">
+						<c:if test="${orderBag.delivery_fee == 0 }">
 							0원
 						</c:if>
-						<c:if test="${goods.delivery_fee != 0 }">
+						<c:if test="${orderBag.delivery_fee != 0 }">
 							${goods.delivery_fee}원
 						</c:if>
 					</td>
 				</c:if>
 				<td>${goods.cnt }개</td>
 				<td>${goods.origin_price }원</td>
+				<td>${goods.dc_price*goods.cnt }원</td>
 				<td>
-					${(goods.origin_price*goods.cnt)}원 <br>
+					<p style="text-decoration:line-through; color: gray;">
+						${(goods.origin_price*goods.cnt)} - ${(goods.dc_price*goods.cnt)}원
+					</p> <br>
 					${(goods.origin_price*goods.cnt) - (goods.dc_price*goods.cnt) }원
 				</td>
 			</tr>
 		</c:forEach>
 	</table>
-	
 	<h2> 배송지 정보</h2>
 	배송지 선택 : 
 		<input type="radio" name="address" id="defaultAddr" checked="checked" value="defaultAddr" onclick="switchAddr('defaultAddr')">기본 배송지 
-		<input type="radio" name="address" id="newAddr" value="newAddr" onclick="switchAddr('newAddr')"> 새로운 배송지
+		<input type="radio" name="address" id="newAddress" value="newAddr" onclick="switchAddr('newAddress')"> 새로운 배송지
 		
 	<p>
-		<div id="normalAddr">
+		<div id="normalAddr" style="display:block;">
 			<%-- 받는분 성함 : ${orderBag.id }	<br /> --%>
 			주소 : ${orderBag.zipcode } <br />
 			상세주소 : ${orderBag.addr } ${orderBag.addr_detail }<br />
-			전화번호 : ${orderBag.tel } <br />
+			<!-- 전화번호 : ${orderBag.tel }  --><br />
 		</div>
 	<p>
-	<div id="newAddr">
+	<div id="inputAddr" style="display:none;">
 		<!-- <p> 받는분 성함 : <input type="text" name="nm" id="nm"> -->
-		<p> 주소 : <input type="text" max="6" name="newZipcode" id="zipcode">
+		<p> 주소 : <input type="text" max="6" name="newZipcode" id="newZipcode" readonly="readonly">
 				  <input type="button" value="우편번호찾기" onclick="findZipcode()"> </p>
-		<p>		  <input type="text" width="30" id="addr" name="newAddr">
-		<p> 상세주소 : <input type="text" width="30" id="addr_detail" name="newAddr_detail">	  
+		<p>		  <input type="text" width="30" id="newAddr" name="newAddr" readonly="readonly">
+		<p> 상세주소 : <input type="text" width="30" id="newAddr_detail" name="newAddr_detail">	  
 		<!-- <p> 전화번호 : <select name="tel">
 						<option value="010" selected="selected">010</option>
 						<option value="016">016</option>
@@ -173,23 +260,65 @@
 	
 	<h2> 포인트 사용</h2>
 	<p>
-		쇼핑몰 포인트 : <input type="text" value="0" id="point">
-					<input type="button" value="포인트 전액 사용" onclick="usePoint()">
+		쇼핑몰 포인트 : <input type="number" value="0" id="inputPoint" pattern="[0-9]">
+					<input type="button" value="포인트 사용" onclick="usePoint()">
 					[사용가능포인트 : ${orderBag.point }]
 		</p>
 	<p>
+	
 	<h2> 결재 정보 </h2>
-	<input type="radio" name="payment" id="payment1" value="kakaopay" onclick="switchShow('kakaopay')" checked="checked">카카오 페이 
-	<input type="radio" name="payment" id="payment2" value="creditcard" onclick="switchShow('creditcard')">신용카드 
-	<input type="radio" name="payment" id="payment3" value="bankbook" onclick="switchShow('bankbook')">실시간 통장
-	<div id="kakaopay" class="payment show">
-		kakaopay
+	<input type="radio" name="payment" id="payment1" value="kakaopay" onclick="switchShow('payment1')" checked="checked">카카오 페이 
+	<input type="radio" name="payment" id="payment2" value="creditcard" onclick="switchShow('payment2')">신용카드 
+	<input type="radio" name="payment" id="payment3" value="bankbook" onclick="switchShow('payment3')">실시간 통장
+	<div id="kakaopay" style="display:block;">
+		kakaoID : 
+		<input type="text" placeholder="kakaoID" name="kakaopay">
 	</div>
-	<div id="creditcard" class="payment none">
-		creditcard
+	<div id="creditcard" style="display:none;">
+		신용카드 선택 : 
+		<select name="creditcard">
+			<option value="신한카드" selected="selected">신한카드</option>
+			<option value="우일카드">우일카드</option>
+			<option value="엄마카드">엄마카드</option>
+			<option value="아빠카드">아빠카드</option>
+			<option value="내카드">내카드</option>
+		</select>
 	</div>
-	<div id="bankbook" class="payment none">
-		bankbook
+	<div id="bankbook" style="display:none;">
+		은행 선택 : 
+		<select name="bankbook">
+			<option value="신한은행" selected="selected">신한은행</option>
+			<option value="우일은행">우일은행</option>
+			<option value="JM은행">JM은행</option>
+			<option value="카카오뱅크">카카오뱅크</option>
+			<option value="마이너스은행">마이너스은행</option>
+		</select>
+	</div>
+	
+	<!-- total -->
+	<div>
+		<table border="1">
+			<tr>
+				<th>총 주문금액</th>
+				<td>${orderBag.total} 원</td>
+			</tr>
+			<tr>
+				<th>배송비</th>
+				<td>${orderBag.delivery_fee} 원</td>
+			</tr>
+			<tr>
+				<th>포인트 사용</th>
+				<td id="usePoint">0원</td>
+			</tr>
+			<tr>
+				<th>최종 주문 금액</th>
+				<td id="totalPrice">${orderBag.total + orderBag.delivery_fee}</td>
+			</tr>
+		</table>
+	 
+	</div>
+	<div>
+		<input type="submit" value="주문하기">
 	</div>
 	
 </form>

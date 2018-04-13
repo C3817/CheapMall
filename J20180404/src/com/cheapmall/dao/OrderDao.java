@@ -58,6 +58,14 @@ public class OrderDao {
 	 * 수정일 : 2018/04/12 
 	 * 1. khOrderReInsert(List<HashMap> list) : 다시 주문할 상품리스틀를 주문함
 	 */
+	
+	/*
+	 * 작성자 : 허진무
+	 * 최초작성일 : 20180412
+	 * 내용 : 
+	 * 	1. userOrder() -> 회원 주문관련 메소드
+	 * 	
+	 */
 
 	private static OrderDao instance;
 
@@ -706,5 +714,173 @@ public class OrderDao {
 		}
 		return result2;
 	}
-
+	
+	// HJM Start!!
+	public int userOrder(String[] goods_sq, int[] origin_price, int[] dc_price, int[] cnt, String[] cart_sq, OrdersDto ordersDto) throws SQLException{
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		int result = 0;
+		String sql = "INSERT INTO orders "
+				+ " VALUES('O' || LPAD(ORDER_SQ.NEXTVAL, 9, '0'), "
+				+ " ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATE) ";
+		
+		try {
+			// Orders Table에 Order_sq 생성
+			conn = getConnection();
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, ordersDto.getUser_id());
+			ps.setInt(2, ordersDto.getOrigin_price());
+			ps.setInt(3, ordersDto.getDc_price());
+			ps.setString(4, ordersDto.getPay_method());
+			ps.setInt(5, ordersDto.getUse_point());
+			ps.setInt(6, ordersDto.getDelivery_fee());
+			ps.setString(7, ordersDto.getAddr());
+			ps.setString(8, ordersDto.getAddr_detail());
+			ps.setString(9, "O0");
+			
+			result = ps.executeUpdate();
+			ps.close();
+			
+			// 완료 시, package를 불러서 order_detail Table 에 주문된 정보를 보낸다.
+			if(result == 1) {
+				for (int i = 0; i < cnt.length; i++) {
+					sql = "Insert INTO ORDER_DETAIL "
+							+ " VALUES('D' || LPAD(order_detail_sq.nextval, 9, '0'), "
+							+ "		   (SELECT MAX(order_sq) FROM orders WHERE user_id=?), ?, ?, ?, ?)";
+					ps = conn.prepareStatement(sql);
+					ps.setString(1, ordersDto.getUser_id());
+					ps.setString(2, goods_sq[i]);
+					ps.setInt(3, origin_price[i]);
+					ps.setInt(4, dc_price[i]);
+					ps.setInt(5, cnt[i]);
+					result = ps.executeUpdate();
+					if(result != 1) {
+						new SQLException();
+					}
+					ps.close();
+				}
+				if(result == 1) {
+					sql = "Update goods "
+							+ " SET stock = stock - ? "
+							+ " WHERE sq = ?";
+					for(int i = 0 ; i < cnt.length ; i++) {
+						ps = conn.prepareStatement(sql);
+						ps.setInt(1, cnt[i]);
+						ps.setString(2, goods_sq[i]);
+						result = ps.executeUpdate();
+						if(result != 1) {
+							new SQLException();
+						}
+						ps.close();
+					}
+					
+				}
+				// Cart에서 주문 한 것이면 cart리스트 삭제
+				if(result == 1 && cart_sq != null) {
+					sql = "DELETE FROM cart "
+							+ " WHERE cart_sq = ?";
+					for(int i=0 ; i < cart_sq.length ; i++) {
+						ps = conn.prepareStatement(sql);
+						ps.setString(1, cart_sq[i]);
+						result = ps.executeUpdate();
+						if(result != 1) {
+							new SQLException();
+						}
+						ps.close();
+					}
+				}
+				System.out.println("@@@@@@@@POINT -> " + ordersDto.getUse_point());
+				
+				if(result == 1 || ordersDto.getUse_point() !=0) {
+					sql = "UPDATE users "
+							+ " SET point = point - ?"
+							+ " WHERE id = ?";
+					ps = conn.prepareStatement(sql);
+					ps.setInt(1, ordersDto.getUse_point());
+					ps.setString(2, ordersDto.getUser_id());
+					result = ps.executeUpdate();
+					if(result != 1) {
+						new SQLException();
+					}
+					ps.close();
+				}
+				
+				// 구매가 성공되면 회원의 포인트를 증가시기키고, 구매건수로 봐서 등급을 조정시킨다.
+				if(result == 1) {
+					// 나중에 프로시저로 만들면 좋을 것
+					sql = "UPDATE users " + 
+							" SET point = " + 
+							"        (CASE " + 
+							"            WHEN grade = 'G0' " + 
+							"                THEN point+( ? *0.02) " + 
+							"            WHEN grade = 'G1' " + 
+							"                THEN point+( ? *0.03) " + 
+							"            WHEN grade = 'G2' " + 
+							"                THEN point+( ? *0.04) " + 
+							"            WHEN grade = 'G3' " + 
+							"                THEN point+( ? *0.07) " + 
+							"            WHEN grade = 'G4' " + 
+							"                THEN point+( ? *0.09) " + 
+							"            WHEN grade = 'G5' " + 
+							"                THEN point+( ? *0.10) " + 
+							"        END)," + 
+							"    grade = " + 
+							"        (CASE " + 
+							"            WHEN 100 < (SELECT COUNT(order_sq) " + 
+							"                       FROM orders " + 
+							"                       WHERE user_id = ? AND order_cd='O4') " + 
+							"                THEN 'G5' " + 
+							"            WHEN 80 < (SELECT COUNT(order_sq) " + 
+							"                       FROM orders " + 
+							"                       WHERE user_id = ? AND order_cd='O4') " + 
+							"                THEN 'G4' " + 
+							"            WHEN 50 < (SELECT COUNT(order_sq) " + 
+							"                       FROM orders " + 
+							"                       WHERE user_id = ? AND order_cd='O4') " + 
+							"                THEN 'G3' " + 
+							"            WHEN 30 < (SELECT COUNT(order_sq) " + 
+							"                       FROM orders " + 
+							"                       WHERE user_id = ? AND order_cd='O4') " + 
+							"                THEN 'G2' " + 
+							"            WHEN 20 < (SELECT COUNT(order_sq) " + 
+							"                       FROM orders " + 
+							"                       WHERE user_id = ? AND order_cd='O4') " + 
+							"                THEN 'G1' " + 
+							"            ELSE " + 
+							"                'G0' " + 
+							"            END) " + 
+							" WHERE id = ?";
+					ps = conn.prepareStatement(sql);
+					ps.setInt(1, (ordersDto.getOrigin_price()-ordersDto.getDc_price()-ordersDto.getUse_point()));
+					ps.setInt(2, (ordersDto.getOrigin_price()-ordersDto.getDc_price()-ordersDto.getUse_point()));
+					ps.setInt(3, (ordersDto.getOrigin_price()-ordersDto.getDc_price()-ordersDto.getUse_point()));
+					ps.setInt(4, (ordersDto.getOrigin_price()-ordersDto.getDc_price()-ordersDto.getUse_point()));
+					ps.setInt(5, (ordersDto.getOrigin_price()-ordersDto.getDc_price()-ordersDto.getUse_point()));
+					ps.setInt(6, (ordersDto.getOrigin_price()-ordersDto.getDc_price()-ordersDto.getUse_point()));
+					ps.setString(7, ordersDto.getUser_id());
+					ps.setString(8, ordersDto.getUser_id());
+					ps.setString(9, ordersDto.getUser_id());
+					ps.setString(10, ordersDto.getUser_id());
+					ps.setString(11, ordersDto.getUser_id());
+					ps.setString(12, ordersDto.getUser_id());
+					
+					result = ps.executeUpdate();
+					if(result != 1) {
+						new SQLException();
+					}
+				}
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			// SYSO
+			System.out.println("userOrder Error");
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, ps, rs);
+		}
+		
+		return result;
+	}
 }

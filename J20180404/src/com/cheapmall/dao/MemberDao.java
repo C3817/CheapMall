@@ -12,6 +12,8 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
+import org.json.simple.JSONObject;
+
 import com.cheapmall.dto.AdminDto;
 import com.cheapmall.dto.UsersDto;
 
@@ -43,6 +45,13 @@ public class MemberDao {
 	 *	4. userList() -> 유저 리스트
 	 *	5. adminUpdateUser() -> 관리자 정보 업데이트
 	 *	6. userLoginCheck() -> 유저 로그인
+	 *	 * 수정일 : 20180411
+	 * 내용 :
+	 * 	1. checkIdAjax() -> 회원가입 시, id 중복검사
+	 * 
+	 * 수정일 : 20180412
+	 * 내용 :
+	 *  1. registUser() -> 회원가입
 	 */
 	
 	/*
@@ -405,6 +414,76 @@ public class MemberDao {
 		
 		return result;
 	}
+	
+	public JSONObject checkIdAjax(String id) throws SQLException{
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		JSONObject json = new JSONObject();
+		String sql = "SELECT id FROM users WHERE id = ?";
+		
+		try {
+			conn = getConnection();
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, id);
+			rs = ps.executeQuery();
+			json.put("result", "no");
+			if(rs.next()) {
+				json.replace("result", "no", "yes");
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			// SYSO
+			System.out.println("checkIdAjax Error");
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, ps, rs);
+		}
+		
+		return json;
+	}
+	
+	public int registUser(UsersDto usersDto) throws SQLException{
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		int result = 0;
+		String sql = "INSERT INTO users "
+				+ " VALUES(?,?,?,?,?,?,?,?,?,?,'G0',0,SYSDATE,SYSDATE)";
+		
+		try {
+			conn = getConnection();
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, usersDto.getId());
+			ps.setString(2, usersDto.getPw());
+			ps.setString(3, usersDto.getNm());
+			ps.setString(4, usersDto.getBirth());
+			ps.setString(5, usersDto.getTel());
+			ps.setString(6, usersDto.getZipcode());
+			ps.setString(7, usersDto.getAddr());
+			ps.setString(8, usersDto.getAddr_detail());
+			ps.setString(9, usersDto.getEmail());
+			ps.setString(10, usersDto.getGender());
+			
+			result = ps.executeUpdate();
+			
+			if(result != 0) {
+				result = 1;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			// SYSO
+			System.out.println("registUser Error");
+			e.printStackTrace();
+		} finally {
+			DisConnection(conn, ps, rs);
+		}
+		
+		return result;
+	}
+	
 	// KMH Part
 	public int userLoginCheck(String id, String pw) throws SQLException{
 		Connection conn = null;
